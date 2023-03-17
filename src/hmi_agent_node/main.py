@@ -55,7 +55,7 @@ class DriverParams:
     drive_z_axis_min_value_after_deadband : float = 0
 
     reset_odometry_button_id: int = -1
-    robot_align_to_grid: int = -1
+    robot_xmode_id: int = -1
     robot_orient_button_id: int = -1
     field_centric_button_id: int = -1
 
@@ -110,6 +110,8 @@ class OperatorSplitParams:
     intake_open_button_id: int = -1
 
     pre_score_position_button_id: int = -1
+
+    robot_xmode_id: int = -1
 
     led_control_pov_id: int = -1
 
@@ -235,7 +237,7 @@ class HmiAgentNode():
 
         # TODO: Real button.
         hmi_update_message.drivetrain_xmode = False
-        if self.operator_joystick.getRisingEdgeButton(10):
+        if self.operator_joystick.getButton(self.driver_params.robot_xmode_id or self.operator_params.robot_xmode_id):
             hmi_update_message.drivetrain_xmode = True
 
         if self.driver_joystick.getRisingEdgeButton(self.driver_params.reset_odometry_button_id):
@@ -320,38 +322,38 @@ class HmiAgentNode():
 
         reverse_arm = target_alliance != robot_status.get_alliance()
 
-        if self.driver_joystick.getButton(self.driver_params.robot_align_to_grid): # or \
-            # self.arm_goal.goal == Arm_Goal.PRE_SCORE: or \
-            # self.arm_goal.goal == Arm_Goal.SHELF_PICKUP:
-            #Do odometry align to grid
-            odom_msg : Odometry = self.odometry_subscriber.get()
-            alliance : Alliance = robot_status.get_alliance()
-            if odom_msg is not None and alliance is not None:
-                desired_heading : float = 0
+        # if self.driver_joystick.getButton(self.driver_params.robot_align_to_grid): # or \
+        #     # self.arm_goal.goal == Arm_Goal.PRE_SCORE: or \
+        #     # self.arm_goal.goal == Arm_Goal.SHELF_PICKUP:
+        #     #Do odometry align to grid
+        #     odom_msg : Odometry = self.odometry_subscriber.get()
+        #     alliance : Alliance = robot_status.get_alliance()
+        #     if odom_msg is not None and alliance is not None:
+        #         desired_heading : float = 0
 
-                if reverse_arm:
+        #         if reverse_arm:
 
-                    if alliance == Alliance.RED:
-                        desired_heading = 0
-                    elif alliance == Alliance.BLUE:
-                        desired_heading = 180
-                else:
-                    if alliance == Alliance.RED:
-                        desired_heading = 180
-                    elif alliance == Alliance.BLUE:
-                        desired_heading = 0
+        #             if alliance == Alliance.RED:
+        #                 desired_heading = 0
+        #             elif alliance == Alliance.BLUE:
+        #                 desired_heading = 180
+        #         else:
+        #             if alliance == Alliance.RED:
+        #                 desired_heading = 180
+        #             elif alliance == Alliance.BLUE:
+        #                 desired_heading = 0
 
-                curr_pose = Pose(odom_msg.pose.pose)
-                actual_heading = math.degrees(curr_pose.orientation.yaw)
-                hmi_update_message.desired_heading = desired_heading
-                hmi_update_message.actual_heading = actual_heading
-                error = wrapMinMax(desired_heading - actual_heading, -180, 180)
-                hmi_update_message.error = error
-                output_val = limit(self.orientation_helper.update_by_error(error), -0.6, 0.6)
-                hmi_update_message.initial_output_val = output_val
-                output_val = normalizeWithDeadband(output_val, 3 * self.orientation_helper.kP, 0.08)
-                hmi_update_message.second_output_val = output_val
-                hmi_update_message.drivetrain_swerve_percent_angular_rot = output_val
+        #         curr_pose = Pose(odom_msg.pose.pose)
+        #         actual_heading = math.degrees(curr_pose.orientation.yaw)
+        #         hmi_update_message.desired_heading = desired_heading
+        #         hmi_update_message.actual_heading = actual_heading
+        #         error = wrapMinMax(desired_heading - actual_heading, -180, 180)
+        #         hmi_update_message.error = error
+        #         output_val = limit(self.orientation_helper.update_by_error(error), -0.6, 0.6)
+        #         hmi_update_message.initial_output_val = output_val
+        #         output_val = normalizeWithDeadband(output_val, 3 * self.orientation_helper.kP, 0.08)
+        #         hmi_update_message.second_output_val = output_val
+        #         hmi_update_message.drivetrain_swerve_percent_angular_rot = output_val
 
         # arm should point away from our driver stattion for shelf pickup
         if self.arm_goal.goal is Arm_Goal.SHELF_PICKUP:
