@@ -55,7 +55,7 @@ class DriverParams:
     drive_z_axis_min_value_after_deadband : float = 0
 
     reset_odometry_button_id: int = -1
-    robot_xmode_id: int = -1
+    robot_xmode_driver_id: int = -1
     robot_orient_button_id: int = -1
     field_centric_button_id: int = -1
 
@@ -235,9 +235,8 @@ class HmiAgentNode():
 
         hmi_update_message.drivetrain_orientation = self.drivetrain_orientation
 
-        # TODO: Real button.
         hmi_update_message.drivetrain_xmode = False
-        if self.operator_joystick.getButton(self.driver_params.robot_xmode_id or self.operator_params.robot_xmode_id):
+        if self.driver_joystick.getButton(self.driver_params.robot_xmode_driver_id) or self.operator_joystick.getButton(self.operator_params.robot_xmode_id):
             hmi_update_message.drivetrain_xmode = True
 
         if self.driver_joystick.getRisingEdgeButton(self.driver_params.reset_odometry_button_id):
