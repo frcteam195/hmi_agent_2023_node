@@ -145,7 +145,7 @@ class HmiAgentNode():
         self.led_timer = 0
         self.party_time = False
 
-        self.current_color = solid_purple
+        self.current_color = solid_yellow
 
         self.heading = 0.0
 
