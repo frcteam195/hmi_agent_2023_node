@@ -115,6 +115,8 @@ class OperatorSplitParams:
 
     led_control_pov_id: int = -1
 
+    toggle_reverse_side_button_id: int = -1
+
 
 class HmiAgentNode():
     """
@@ -168,6 +170,8 @@ class HmiAgentNode():
 
         self.orientation_helper = PIDController(kP=0.0047, kD=0.001, filter_r=0.6)
 
+        self.reverse_side = False
+        
         rospy.Subscriber(name="/JoystickStatus", data_class=Joystick_Status, callback=self.joystick_callback, queue_size=1, tcp_nodelay=True)
         # profiler = cProfile.Profile()
         # profiler.enable()
@@ -266,6 +270,7 @@ class HmiAgentNode():
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.home_button_id):
             self.arm_goal.goal = Arm_Goal.HOME
+            self.reverse_side = False
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.shelf_button_id):
             self.arm_goal.goal = Arm_Goal.SHELF_PICKUP
@@ -301,7 +306,12 @@ class HmiAgentNode():
         if self.operator_button_box.getRisingEdgeButton(11):
             self.arm_goal.goal = Arm_Goal.PRE_DEAD_CONE
 
+        if self.operator_joystick.getRisingEdgeButton(self.operator_params.toggle_reverse_side_button_id):
+            self.reverse_side = not self.reverse_side
+            print(self.reverse_side)
+
         pov_status, pov_dir = self.operator_joystick.getRisingEdgePOV(0)
+
 
         if pov_status:
             if pov_dir == 0:
@@ -365,7 +375,8 @@ class HmiAgentNode():
             self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
 
         if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
-            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.operator_joystick.getButton(3) else Arm_Goal.SIDE_BACK
+            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.reverse_side else Arm_Goal.SIDE_BACK
+         
 
         self.arm_goal_publisher.publish(self.arm_goal)
 
