@@ -2,11 +2,11 @@
 Class definition of the HMI agent node.
 """
 
+import typing
 from dataclasses import dataclass
+import rospy
 
 import numpy as np
-import rospy
-import typing
 
 from actions_node.ActionRunner import ActionRunner
 from actions_node.game_specific_actions import AutomatedActions
@@ -25,6 +25,8 @@ from ck_ros_base_msgs_node.msg import Joystick_Status
 from actions_node.game_specific_actions.Subsystem import Subsystem
 from ck_utilities_py_node.pid_controller import PIDController
 # import cProfile
+
+from drive import limit_drive_power
 
 NUM_LEDS = 50
 solid_purple = Led_Control(Led_Control.SET_LED, 0, 57, 3, 87, 0, 1, 0, NUM_LEDS, "")
@@ -59,33 +61,11 @@ class DriverParams:
     robot_orient_button_id: int = -1
     field_centric_button_id: int = -1
 
-
-@dataclass
-class OperatorParams:
-    """
-    Operator parameters. Must match the configuration YAML loaded.
-    """
-    outtake_axis_id: int = -1
-    intake_axis_id: int = -1
-    activation_threshold: float = 0
-
-    ground_intake_button_id: int = -1
-    hybrid_node_button_id: int = -1
-    mid_node_button_id: int = -1
-    high_node_button_id: int = -1
-    in_bot_button_id: int = -1
-    party_mode_button_id: int = -1
-    operator_pinch_button_id: int = -1
-    operator_unpinch_button_id: int = -1
-    wrist_left_90_button_id: int = -1
-    wrist_straight_button_id: int = -1
-    wrist_left_180_button_id: int = -1
-
-    led_control_pov_id: int = -1
-
-
 @dataclass
 class OperatorSplitParams:
+    """
+    Operator parameters for the split joystick/button box. Must match the configuration YAML.
+    """
     # Button Box
     home_button_id: int = -1
     shelf_button_id: int = -1
@@ -129,13 +109,10 @@ class HmiAgentNode():
         self.action_runner = ActionRunner()
 
         self.driver_joystick = Joystick(0)
-        # self.operator_controller = Joystick(1)
-
         self.operator_button_box = Joystick(1)
         self.operator_joystick = Joystick(2)
 
         self.driver_params = DriverParams()
-        # self.operator_params = OperatorParams()
         self.operator_params = OperatorSplitParams()
 
         load_parameter_class(self.driver_params)
@@ -308,7 +285,6 @@ class HmiAgentNode():
 
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.toggle_reverse_side_button_id):
             self.reverse_side = not self.reverse_side
-            print(self.reverse_side)
 
         pov_status, pov_dir = self.operator_joystick.getRisingEdgePOV(0)
 
@@ -367,16 +343,17 @@ class HmiAgentNode():
         # arm should point away from our driver stattion for shelf pickup
         if self.arm_goal.goal is Arm_Goal.SHELF_PICKUP:
             reverse_arm = not reverse_arm
+        elif self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE) and self.reverse_side:
+            reverse_arm = not reverse_arm
 
         if reverse_arm:
-            # Robot is facing our driver station
+            # Robot is facing our driver station.
             self.arm_goal.goal_side = Arm_Goal.SIDE_BACK
         else:
             self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
 
-        if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
-            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.reverse_side else Arm_Goal.SIDE_BACK
-         
+        # if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
+        #     self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.reverse_side else Arm_Goal.SIDE_BACK
 
         self.arm_goal_publisher.publish(self.arm_goal)
 
@@ -436,27 +413,3 @@ class HmiAgentNode():
             self.led_control_message = self.current_color
 
         self.led_control_publisher.publish(self.led_control_message)
-
-
-def limit_drive_power(arm_status: Arm_Status, forward_velocity: float, angular_rotation: float) -> typing.Tuple[float, float]:
-    """
-    Limit the drive power depending on the current arm position.
-    """
-    forward_limit = 1.0
-    angular_limit = 1.0
-
-    if arm_status is not None:
-        overall_arm_angle = abs(arm_status.arm_base_angle + arm_status.arm_upper_angle)
-        overall_arm_angle = limit(overall_arm_angle, 0.0, 150)
-
-        forward_limit = -0.006666667 * overall_arm_angle + 1.2
-        angular_limit = -0.006666667 * overall_arm_angle + 1.2
-
-        if arm_status.extended or arm_status.goal == Arm_Goal.SHELF_PICKUP:
-            forward_limit -= 0.1
-            angular_limit -= 0.1
-
-    forward_limit = limit(forward_limit, 0.0, 1.0)
-    angular_limit = limit(angular_limit, 0.0, 1.0)
-
-    return limit(forward_velocity, -forward_limit, forward_limit), limit(angular_rotation, -angular_limit, angular_limit)
