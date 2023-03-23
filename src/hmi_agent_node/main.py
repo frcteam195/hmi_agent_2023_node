@@ -26,6 +26,7 @@ from actions_node.game_specific_actions.Subsystem import Subsystem
 from ck_utilities_py_node.pid_controller import PIDController
 # import cProfile
 
+from hmi_agent_node.arm_control import get_away_side, get_home_side
 from hmi_agent_node.drive import limit_drive_power
 
 NUM_LEDS = 50
@@ -238,14 +239,13 @@ class HmiAgentNode():
             yaw = normalize_to_2_pi(yaw)
             self.heading = np.degrees(yaw)
 
-        target_alliance = Alliance.RED if 90 < self.heading < 270 else Alliance.BLUE
         hmi_update_message.drivetrain_heading = self.heading
 
 
         ################################################################################
         ###                         CONTROL MAPPINGS                                 ###
         ################################################################################
-        reverse_arm = target_alliance != robot_status.get_alliance()
+        
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.home_button_id):
             self.arm_goal.goal = Arm_Goal.HOME
@@ -308,15 +308,11 @@ class HmiAgentNode():
             if pov_dir == 270:
                 self.arm_goal.wrist_goal = Arm_Goal.WRIST_90
 
-        # arm should point away from our driver stattion for shelf pickup
+        # Arm should point away for shelf pick-up.
         if self.arm_goal.goal in (Arm_Goal.SHELF_PICKUP, Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
-            reverse_arm = not reverse_arm
-
-        if reverse_arm:
-            # Robot is facing our driver station.
-            self.arm_goal.goal_side = Arm_Goal.SIDE_BACK
+            self.arm_goal.goal_side = get_away_side(self.heading)
         else:
-            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
+            self.arm_goal.goal_side = get_home_side(self.heading)
 
         if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
             if self.intake_side is None:

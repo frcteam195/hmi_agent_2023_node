@@ -1,7 +1,5 @@
 import typing
 
-import numpy as np
-
 from ck_ros_msgs_node.msg import Arm_Goal, Arm_Status
 from ck_utilities_py_node.ckmath import *
 
