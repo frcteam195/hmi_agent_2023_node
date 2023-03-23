@@ -26,7 +26,7 @@ from actions_node.game_specific_actions.Subsystem import Subsystem
 from ck_utilities_py_node.pid_controller import PIDController
 # import cProfile
 
-from drive import limit_drive_power
+from hmi_agent_node.drive import limit_drive_power
 
 NUM_LEDS = 50
 solid_purple = Led_Control(Led_Control.SET_LED, 0, 57, 3, 87, 0, 1, 0, NUM_LEDS, "")
@@ -147,8 +147,9 @@ class HmiAgentNode():
 
         self.orientation_helper = PIDController(kP=0.0047, kD=0.001, filter_r=0.6)
 
-        self.reverse_side = False
-        
+        self.reverse_intake = False
+        self.intake_side = None
+
         rospy.Subscriber(name="/JoystickStatus", data_class=Joystick_Status, callback=self.joystick_callback, queue_size=1, tcp_nodelay=True)
         # profiler = cProfile.Profile()
         # profiler.enable()
@@ -244,10 +245,12 @@ class HmiAgentNode():
         ################################################################################
         ###                         CONTROL MAPPINGS                                 ###
         ################################################################################
+        reverse_arm = target_alliance != robot_status.get_alliance()
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.home_button_id):
             self.arm_goal.goal = Arm_Goal.HOME
-            self.reverse_side = False
+            self.reverse_intake = False
+            self.intake_side = None
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.shelf_button_id):
             self.arm_goal.goal = Arm_Goal.SHELF_PICKUP
@@ -284,7 +287,7 @@ class HmiAgentNode():
             self.arm_goal.goal = Arm_Goal.PRE_DEAD_CONE
 
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.toggle_reverse_side_button_id):
-            self.reverse_side = not self.reverse_side
+            self.reverse_intake = not self.reverse_intake
 
         pov_status, pov_dir = self.operator_joystick.getRisingEdgePOV(0)
 
@@ -305,45 +308,8 @@ class HmiAgentNode():
             if pov_dir == 270:
                 self.arm_goal.wrist_goal = Arm_Goal.WRIST_90
 
-        reverse_arm = target_alliance != robot_status.get_alliance()
-
-        # if self.driver_joystick.getButton(self.driver_params.robot_align_to_grid): # or \
-        #     # self.arm_goal.goal == Arm_Goal.PRE_SCORE: or \
-        #     # self.arm_goal.goal == Arm_Goal.SHELF_PICKUP:
-        #     #Do odometry align to grid
-        #     odom_msg : Odometry = self.odometry_subscriber.get()
-        #     alliance : Alliance = robot_status.get_alliance()
-        #     if odom_msg is not None and alliance is not None:
-        #         desired_heading : float = 0
-
-        #         if reverse_arm:
-
-        #             if alliance == Alliance.RED:
-        #                 desired_heading = 0
-        #             elif alliance == Alliance.BLUE:
-        #                 desired_heading = 180
-        #         else:
-        #             if alliance == Alliance.RED:
-        #                 desired_heading = 180
-        #             elif alliance == Alliance.BLUE:
-        #                 desired_heading = 0
-
-        #         curr_pose = Pose(odom_msg.pose.pose)
-        #         actual_heading = math.degrees(curr_pose.orientation.yaw)
-        #         hmi_update_message.desired_heading = desired_heading
-        #         hmi_update_message.actual_heading = actual_heading
-        #         error = wrapMinMax(desired_heading - actual_heading, -180, 180)
-        #         hmi_update_message.error = error
-        #         output_val = limit(self.orientation_helper.update_by_error(error), -0.6, 0.6)
-        #         hmi_update_message.initial_output_val = output_val
-        #         output_val = normalizeWithDeadband(output_val, 3 * self.orientation_helper.kP, 0.08)
-        #         hmi_update_message.second_output_val = output_val
-        #         hmi_update_message.drivetrain_swerve_percent_angular_rot = output_val
-
         # arm should point away from our driver stattion for shelf pickup
-        if self.arm_goal.goal is Arm_Goal.SHELF_PICKUP:
-            reverse_arm = not reverse_arm
-        elif self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE) and self.reverse_side:
+        if self.arm_goal.goal in (Arm_Goal.SHELF_PICKUP, Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
             reverse_arm = not reverse_arm
 
         if reverse_arm:
@@ -352,8 +318,17 @@ class HmiAgentNode():
         else:
             self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
 
+        if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
+            if self.intake_side is None:
+                if self.reverse_intake:
+                    self.intake_side = Arm_Goal.SIDE_FRONT if self.arm_goal.goal_side == Arm_Goal.SIDE_BACK else Arm_Goal.SIDE_BACK
+                else:
+                    self.intake_side = Arm_Goal.SIDE_BACK if self.arm_goal.goal_side == Arm_Goal.SIDE_BACK else Arm_Goal.SIDE_FRONT
+
+            self.arm_goal.goal_side = self.intake_side
+
         # if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
-        #     self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.reverse_side else Arm_Goal.SIDE_BACK
+        #     self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.reverse_intake else Arm_Goal.SIDE_BACK
 
         self.arm_goal_publisher.publish(self.arm_goal)
 
