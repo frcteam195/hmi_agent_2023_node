@@ -3,6 +3,21 @@ from ck_ros_msgs_node.msg import Arm_Goal
 from frc_robot_utilities_py_node.frc_robot_utilities_py import *
 from frc_robot_utilities_py_node.RobotStatusHelperPy import Alliance
 
+AWAY_GOALS = [
+    Arm_Goal.GROUND_DEAD_CONE,
+    Arm_Goal.GROUND_CONE,
+    Arm_Goal.GROUND_CUBE,
+    Arm_Goal.PRE_DEAD_CONE,
+    Arm_Goal.SHELF_PICKUP
+]
+
+INTAKE_GOALS = [
+    Arm_Goal.GROUND_DEAD_CONE,
+    Arm_Goal.GROUND_CONE,
+    Arm_Goal.GROUND_CUBE,
+    Arm_Goal.PRE_DEAD_CONE
+]
+
 def get_away_side(heading: float) -> int:
     """
     Gets the side of the robot facing your opponent's alliance.

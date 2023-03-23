@@ -2,32 +2,29 @@
 Class definition of the HMI agent node.
 """
 
-import typing
 from dataclasses import dataclass
 import rospy
 
 import numpy as np
 
+from hmi_agent_node.arm_control import get_away_side, get_home_side, INTAKE_GOALS
+from hmi_agent_node.drive import limit_drive_power
+
 from actions_node.ActionRunner import ActionRunner
-from actions_node.game_specific_actions import AutomatedActions
+from actions_node.game_specific_actions.Subsystem import Subsystem
 from ck_ros_msgs_node.msg import HMI_Signals, Intake_Control, Led_Control, Arm_Goal, Arm_Status
 from nav_msgs.msg import Odometry
+from ck_ros_base_msgs_node.msg import Joystick_Status
 
 from ck_utilities_py_node.ckmath import *
 from ck_utilities_py_node.geometry import *
 from ck_utilities_py_node.joystick import Joystick
+from ck_utilities_py_node.pid_controller import PIDController
 from ck_utilities_py_node.rosparam_helper import load_parameter_class
 from frc_robot_utilities_py_node.frc_robot_utilities_py import *
-from frc_robot_utilities_py_node.RobotStatusHelperPy import Alliance, BufferedROSMsgHandlerPy
+from frc_robot_utilities_py_node.RobotStatusHelperPy import BufferedROSMsgHandlerPy
 
-from actions_node.game_specific_actions.PlaceHighConeAction import PlaceHighConeAction
-from ck_ros_base_msgs_node.msg import Joystick_Status
-from actions_node.game_specific_actions.Subsystem import Subsystem
-from ck_utilities_py_node.pid_controller import PIDController
 # import cProfile
-
-from hmi_agent_node.arm_control import get_away_side, get_home_side
-from hmi_agent_node.drive import limit_drive_power
 
 NUM_LEDS = 50
 solid_purple = Led_Control(Led_Control.SET_LED, 0, 57, 3, 87, 0, 1, 0, NUM_LEDS, "")
@@ -75,7 +72,8 @@ class OperatorSplitParams:
     high_cone_button_id: int = -1
     mid_cone_button_id: int = -1
     pickup_cone_button_id: int = -1
-    pickup_dead_cone_button_id:  int = -1
+    pickup_dead_cone_button_id: int = -1
+    pre_dead_cone_button_id: int = -1
 
     high_cube_button_id: int = -1
     mid_cube_button_id: int = -1
@@ -130,6 +128,8 @@ class HmiAgentNode():
         self.heading = 0.0
 
         self.pinch_active = True
+
+        self.current_goal = Arm_Goal.HOME
 
         self.hmi_publisher = rospy.Publisher(name="/HMISignals", data_class=HMI_Signals, queue_size=10, tcp_nodelay=True)
         self.intake_publisher = rospy.Publisher(name="/IntakeControl", data_class=Intake_Control, queue_size=10, tcp_nodelay=True)
@@ -245,52 +245,54 @@ class HmiAgentNode():
         ################################################################################
         ###                         CONTROL MAPPINGS                                 ###
         ################################################################################
-        
-
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.home_button_id):
-            self.arm_goal.goal = Arm_Goal.HOME
-            self.reverse_intake = False
-            self.intake_side = None
+            self.current_goal = Arm_Goal.HOME
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.shelf_button_id):
-            self.arm_goal.goal = Arm_Goal.SHELF_PICKUP
+            self.current_goal = Arm_Goal.SHELF_PICKUP
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.high_cone_button_id):
-            self.arm_goal.goal = Arm_Goal.HIGH_CONE
+            self.current_goal = Arm_Goal.HIGH_CONE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.mid_cone_button_id):
-            self.arm_goal.goal = Arm_Goal.MID_CONE
+            self.current_goal = Arm_Goal.MID_CONE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pickup_cone_button_id):
-            self.arm_goal.goal = Arm_Goal.GROUND_CONE
+            self.current_goal = Arm_Goal.GROUND_CONE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pickup_dead_cone_button_id):
-            self.arm_goal.goal = Arm_Goal.GROUND_DEAD_CONE
+            self.current_goal = Arm_Goal.GROUND_DEAD_CONE
 
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.pre_score_position_button_id):
-            self.arm_goal.goal = Arm_Goal.PRE_SCORE
+            self.current_goal = Arm_Goal.PRE_SCORE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.high_cube_button_id):
-            self.arm_goal.goal = Arm_Goal.HIGH_CUBE
+            self.current_goal = Arm_Goal.HIGH_CUBE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.mid_cube_button_id):
-            self.arm_goal.goal = Arm_Goal.MID_CUBE
+            self.current_goal = Arm_Goal.MID_CUBE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pickup_cube_button_id):
-            self.arm_goal.goal = Arm_Goal.GROUND_CUBE
+            self.current_goal = Arm_Goal.GROUND_CUBE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.low_button_id):
-            self.arm_goal.goal = Arm_Goal.LOW_SCORE
+            self.current_goal = Arm_Goal.LOW_SCORE
 
-        # TODO: Put this in the params
-        if self.operator_button_box.getRisingEdgeButton(11):
-            self.arm_goal.goal = Arm_Goal.PRE_DEAD_CONE
+        if self.operator_button_box.getRisingEdgeButton(self.operator_params.pre_dead_cone_button_id):
+            self.current_goal = Arm_Goal.PRE_DEAD_CONE
+
+        # If the new arm goal is not an intake goal, reset the intake parameters.
+        if self.current_goal != self.arm_goal.goal and self.current_goal not in INTAKE_GOALS:
+            self.intake_side = None
+            self.reverse_intake = False
+
+        self.arm_goal.goal = self.current_goal
 
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.toggle_reverse_side_button_id):
             self.reverse_intake = not self.reverse_intake
 
+        # Control the wrist using the POV.
         pov_status, pov_dir = self.operator_joystick.getRisingEdgePOV(0)
-
 
         if pov_status:
             if pov_dir == 0:
@@ -314,6 +316,7 @@ class HmiAgentNode():
         else:
             self.arm_goal.goal_side = get_home_side(self.heading)
 
+        # Lock the intake positions to their original side.
         if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
             if self.intake_side is None:
                 if self.reverse_intake:
@@ -323,12 +326,9 @@ class HmiAgentNode():
 
             self.arm_goal.goal_side = self.intake_side
 
-        # if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
-        #     self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT if not self.reverse_intake else Arm_Goal.SIDE_BACK
-
         self.arm_goal_publisher.publish(self.arm_goal)
-
         self.hmi_publisher.publish(hmi_update_message)
+
         self.action_runner.loop(robot_status.get_mode())
 
     def process_intake_control(self):
