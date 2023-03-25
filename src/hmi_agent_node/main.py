@@ -314,10 +314,10 @@ class HmiAgentNode():
         # Control the intake rollers.
         if self.operator_joystick.getButton(self.operator_params.intake_in_button_id):
             self.arm_goal.intake_goal = Arm_Goal.INTAKE_CONE
-            self.arm_goal.speed = 0.70
+            self.arm_goal.speed = 1.0
         elif self.operator_joystick.getButton(self.operator_params.intake_out_button_id):
             self.arm_goal.intake_goal = Arm_Goal.INTAKE_CUBE
-            self.arm_goal.speed = 0.35
+            self.arm_goal.speed = 0.5
         else:
             self.arm_goal.intake_goal = Arm_Goal.INTAKE_OFF
 
