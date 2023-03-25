@@ -136,7 +136,6 @@ class HmiAgentNode():
         self.arm_goal_publisher = rospy.Publisher(name="/ArmGoal", data_class=Arm_Goal, queue_size=10, tcp_nodelay=True)
         self.arm_goal = Arm_Goal()
         self.arm_goal.goal = Arm_Goal.HOME
-        self.arm_goal.wrist_goal = Arm_Goal.WRIST_ZERO
 
         self.odometry_subscriber = BufferedROSMsgHandlerPy(Odometry)
         self.odometry_subscriber.register_for_updates("odometry/filtered")
