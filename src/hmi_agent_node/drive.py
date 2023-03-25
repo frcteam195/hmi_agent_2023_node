@@ -17,7 +17,7 @@ def limit_drive_power(arm_status: Arm_Status, forward_velocity: float, angular_r
         forward_limit = -0.006666667 * overall_arm_angle + 1.2
         angular_limit = -0.006666667 * overall_arm_angle + 1.2
 
-        if arm_status.extended or arm_status.goal == Arm_Goal.SHELF_PICKUP:
+        if arm_status.extended or arm_status.goal in (Arm_Goal.SHELF_CONE_PICKUP, Arm_Goal.SHELF_CUBE_PICKUP):
             forward_limit -= 0.1
             angular_limit -= 0.1
 
