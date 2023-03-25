@@ -326,54 +326,25 @@ class HmiAgentNode():
 
             self.arm_goal.goal_side = self.intake_side
 
+        # Control the intake rollers.
+        if self.operator_joystick.getButton(self.operator_params.intake_in_button_id):
+            self.arm_goal.intake_goal = Arm_Goal.INTAKE_CONE
+            self.arm_goal.speed = 0.70
+        elif self.operator_joystick.getButton(self.operator_params.intake_out_button_id):
+            self.arm_goal.intake_goal = Arm_Goal.INTAKE_CUBE
+            self.arm_goal.speed = 0.35
+        else:
+            self.arm_goal.intake_goal = Arm_Goal.INTAKE_OFF
+
         self.arm_goal_publisher.publish(self.arm_goal)
         self.hmi_publisher.publish(hmi_update_message)
 
         self.action_runner.loop(robot_status.get_mode())
 
-    def process_intake_control(self):
-        """
-        Handles all intake control.
-        """
-        intake_control = Intake_Control()
-        intake_action = None
-
-        if Subsystem.INTAKE in self.action_runner.get_operated_systems():
-            intake_control = None
-
-        if self.operator_joystick.getButton(self.operator_params.intake_close_button_id):
-            self.pinch_active = True
-        elif self.operator_joystick.getButton(self.operator_params.intake_open_button_id):
-            self.pinch_active = False
-        elif self.arm_goal.goal in (Arm_Goal.GROUND_CUBE, Arm_Goal.PRE_DEAD_CONE):
-            self.pinch_active = False
-        elif self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_DEAD_CONE):
-            self.pinch_active = True
-
-        if self.operator_joystick.getButton(self.operator_params.intake_in_button_id):
-            intake_control.rollers_intake = True
-            intake_control.rollers_outtake = False
-        elif self.operator_joystick.getButton(self.operator_params.intake_out_button_id):
-            intake_control.rollers_intake = False
-            intake_control.rollers_outtake = True
-            if self.arm_goal.goal == Arm_Goal.HIGH_CUBE:
-                intake_control.speed = 0.3
-            else:
-                intake_control.speed = 0
-
-        if intake_control is not None:
-            intake_control.pinched = self.pinch_active
-
-        self.intake_publisher.publish(intake_control)
-
-        if intake_action is not None:
-            self.action_runner.start_action(intake_action)
-
     def process_leds(self):
         """
         Handles all the LED changes.
         """
-
         if not robot_status.is_connected():
             self.led_control_message = strobe_red
         elif robot_status.get_mode() != RobotMode.TELEOP:
