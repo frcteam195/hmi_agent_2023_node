@@ -228,7 +228,6 @@ class HmiAgentNode():
         #######################################################################
         ###                        OPERATOR CONTROLS                        ###
         #######################################################################
-        self.process_intake_control()
         self.process_leds()
 
         # Determine the alliance station the robot is facing.
