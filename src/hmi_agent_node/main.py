@@ -230,7 +230,7 @@ class HmiAgentNode():
 
         # Determine the alliance station the robot is facing.
         if self.odometry_subscriber.get() is not None:
-            odometry_message = self.odometry_subscriber.get()
+            odometry_message : Odometry = self.odometry_subscriber.get()
             rotation = Rotation(odometry_message.pose.pose.orientation)
             yaw = rotation.yaw
             yaw = normalize_to_2_pi(yaw)
@@ -296,7 +296,7 @@ class HmiAgentNode():
 
 
         # Arm should point away for shelf pick-up.
-        if self.arm_goal.goal in (Arm_Goal.SHELF_PICKUP, Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
+        if self.arm_goal.goal in (Arm_Goal.SHELF_CUBE_PICKUP, Arm_Goal.SHELF_CONE_PICKUP, Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
             self.arm_goal.goal_side = get_away_side(self.heading)
         else:
             self.arm_goal.goal_side = get_home_side(self.heading)
