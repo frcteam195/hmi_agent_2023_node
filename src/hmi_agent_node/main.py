@@ -66,11 +66,12 @@ class OperatorSplitParams:
     """
     # Button Box
     home_button_id: int = -1
-    shelf_button_id: int = -1
-    low_button_id: int = -1
+
 
     high_cone_button_id: int = -1
     mid_cone_button_id: int = -1
+    shelf_cone_button_id: int = -1
+    low_cone_button_id: int = -1
     pickup_cone_button_id: int = -1
     pickup_dead_cone_button_id: int = -1
     pre_dead_cone_button_id: int = -1
@@ -78,6 +79,8 @@ class OperatorSplitParams:
     high_cube_button_id: int = -1
     mid_cube_button_id: int = -1
     pickup_cube_button_id: int = -1
+    shelf_cube_button_id: int = -1
+    low_cube_button_id: int = -1
 
     led_toggle_id: int = -1
 
@@ -85,14 +88,9 @@ class OperatorSplitParams:
     intake_in_button_id: int = -1
     intake_out_button_id: int = -1
 
-    intake_close_button_id: int = -1
-    intake_open_button_id: int = -1
-
     pre_score_position_button_id: int = -1
 
     robot_xmode_id: int = -1
-
-    led_control_pov_id: int = -1
 
     toggle_reverse_side_button_id: int = -1
 
@@ -290,24 +288,6 @@ class HmiAgentNode():
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.toggle_reverse_side_button_id):
             self.reverse_intake = not self.reverse_intake
 
-        # Control the wrist using the POV.
-        pov_status, pov_dir = self.operator_joystick.getRisingEdgePOV(0)
-
-        if pov_status:
-            if pov_dir == 0:
-                self.arm_goal.wrist_goal = Arm_Goal.WRIST_ZERO
-
-            if pov_dir == 90:
-                if self.arm_goal.wrist_goal == Arm_Goal.WRIST_180:
-                    self.arm_goal.wrist_goal = Arm_Goal.WRIST_ZERO
-                elif self.arm_goal.wrist_goal == Arm_Goal.WRIST_ZERO:
-                    self.arm_goal.wrist_goal = Arm_Goal.WRIST_180
-
-            if pov_dir == 180:
-                self.arm_goal.wrist_goal = Arm_Goal.WRIST_180
-
-            if pov_dir == 270:
-                self.arm_goal.wrist_goal = Arm_Goal.WRIST_90
 
         # Arm should point away for shelf pick-up.
         if self.arm_goal.goal in (Arm_Goal.SHELF_PICKUP, Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
@@ -349,7 +329,7 @@ class HmiAgentNode():
         elif robot_status.get_mode() != RobotMode.TELEOP:
             self.led_control_message = larson_purple
         else:
-            if self.operator_button_box.getRisingEdgeButton(self.operator_params.led_toggle_id):
+            if self.operator_joystick.getRisingEdgeButton(self.operator_params.led_toggle_id):
                 self.current_color = solid_yellow if self.current_color == solid_purple else solid_purple
             self.led_control_message = self.current_color
 
