@@ -8,7 +8,8 @@ AWAY_GOALS = [
     Arm_Goal.GROUND_CONE,
     Arm_Goal.GROUND_CUBE,
     Arm_Goal.PRE_DEAD_CONE,
-    Arm_Goal.SHELF_PICKUP
+    Arm_Goal.SHELF_CONE_PICKUP,
+    Arm_Goal.SHELF_CUBE_PICKUP
 ]
 
 INTAKE_GOALS = [
