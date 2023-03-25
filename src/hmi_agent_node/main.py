@@ -245,8 +245,11 @@ class HmiAgentNode():
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.home_button_id):
             self.current_goal = Arm_Goal.HOME
 
-        if self.operator_button_box.getRisingEdgeButton(self.operator_params.shelf_button_id):
-            self.current_goal = Arm_Goal.SHELF_PICKUP
+        if self.operator_button_box.getRisingEdgeButton(self.operator_params.shelf_cone_button_id):
+            self.current_goal = Arm_Goal.SHELF_CONE_PICKUP
+    
+        if self.operator_button_box.getRisingEdgeButton(self.operator_params.shelf_cube_button_id):
+            self.current_goal = Arm_Goal.SHELF_CUBE_PICKUP
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.high_cone_button_id):
             self.current_goal = Arm_Goal.HIGH_CONE
@@ -272,8 +275,11 @@ class HmiAgentNode():
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pickup_cube_button_id):
             self.current_goal = Arm_Goal.GROUND_CUBE
 
-        if self.operator_button_box.getRisingEdgeButton(self.operator_params.low_button_id):
-            self.current_goal = Arm_Goal.LOW_SCORE
+        if self.operator_button_box.getRisingEdgeButton(self.operator_params.low_cone_button_id):
+            self.current_goal = Arm_Goal.LOW_CONE
+
+        if self.operator_button_box.getRisingEdgeButton(self.operator_params.low_cube_button_id):
+            self.current_goal = Arm_Goal.LOW_CUBE
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pre_dead_cone_button_id):
             self.current_goal = Arm_Goal.PRE_DEAD_CONE
