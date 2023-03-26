@@ -12,7 +12,7 @@ from hmi_agent_node.drive import limit_drive_power
 
 from actions_node.ActionRunner import ActionRunner
 from actions_node.game_specific_actions.Subsystem import Subsystem
-from ck_ros_msgs_node.msg import HMI_Signals, Intake_Control, Led_Control, Arm_Goal, Arm_Status
+from ck_ros_msgs_node.msg import HMI_Signals, Intake_Control, Led_Control, Arm_Goal, Arm_Status, Intake_Goal
 from nav_msgs.msg import Odometry
 from ck_ros_base_msgs_node.msg import Joystick_Status
 
@@ -136,6 +136,10 @@ class HmiAgentNode():
         self.arm_goal_publisher = rospy.Publisher(name="/ArmGoal", data_class=Arm_Goal, queue_size=10, tcp_nodelay=True)
         self.arm_goal = Arm_Goal()
         self.arm_goal.goal = Arm_Goal.HOME
+
+        self.intake_goal_publisher = rospy.Publisher(name="/IntakeGoal", data_class=Intake_Goal, queue_size=10, tcp_nodelay=True)
+        self.intake_goal = Intake_Goal()
+        self.intake_goal.intake_goal = Intake_Goal.INTAKE_OFF
 
         self.odometry_subscriber = BufferedROSMsgHandlerPy(Odometry)
         self.odometry_subscriber.register_for_updates("odometry/filtered")
@@ -312,15 +316,16 @@ class HmiAgentNode():
 
         # Control the intake rollers.
         if self.operator_joystick.getButton(self.operator_params.intake_in_button_id):
-            self.arm_goal.intake_goal = Arm_Goal.INTAKE_CONE
-            self.arm_goal.speed = 1.0
+            self.intake_goal.intake_goal = Intake_Goal.INTAKE_CONE
+            self.intake_goal.speed = 1.0
         elif self.operator_joystick.getButton(self.operator_params.intake_out_button_id):
-            self.arm_goal.intake_goal = Arm_Goal.INTAKE_CUBE
-            self.arm_goal.speed = 0.5
+            self.intake_goal.intake_goal = Intake_Goal.INTAKE_CUBE
+            self.intake_goal.speed = 0.5
         else:
-            self.arm_goal.intake_goal = Arm_Goal.INTAKE_OFF
+            self.intake_goal.intake_goal = Intake_Goal.INTAKE_OFF
 
         self.arm_goal_publisher.publish(self.arm_goal)
+        self.intake_goal_publisher.publish(self.intake_goal)
         self.hmi_publisher.publish(hmi_update_message)
 
         self.action_runner.loop(robot_status.get_mode())
