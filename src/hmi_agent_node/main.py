@@ -167,10 +167,11 @@ class HmiAgentNode():
 
         #DO NOT REMOVE THIS CHECK!!!!!!!!!! DID YOU LEARN NOTHING FROM 2022?!
         if robot_status.get_mode() != RobotMode.TELEOP:
-            arm_message = self.arm_subscriber.get()
+            arm_message : Arm_Status = self.arm_subscriber.get()
             if arm_message is not None:
                 self.arm_goal.wrist_goal = arm_message.goal.wrist_goal
                 self.current_goal = arm_message.goal.goal
+                self.arm_goal.goal_side = arm_message.goal.goal_side
             #print(arm_status_message.goal.arm)
             self.process_leds()
             return
