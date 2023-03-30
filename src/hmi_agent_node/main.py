@@ -74,7 +74,6 @@ class OperatorSplitParams:
     pickup_cone_button_id: int = -1
     pickup_dead_cone_button_id: int = -1
     pre_dead_cone_button_id: int = -1
-    sideways_dead_cone_button_id: int = -1
 
     high_cube_button_id: int = -1
     mid_cube_button_id: int = -1
@@ -286,9 +285,6 @@ class HmiAgentNode():
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pre_dead_cone_button_id):
             self.current_goal = Arm_Goal.PRE_DEAD_CONE
-        
-        if self.operator_joystick.getRisingEdgeButton(6):
-            self.current_goal = Arm_Goal.SIDEWAYS_DEAD_CONE
 
         # If the new arm goal is not an intake goal, reset the intake parameters.
         if self.current_goal != self.arm_goal.goal and self.current_goal not in INTAKE_GOALS:

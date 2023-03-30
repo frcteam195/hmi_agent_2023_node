@@ -8,7 +8,6 @@ AWAY_GOALS = [
     Arm_Goal.GROUND_CONE,
     Arm_Goal.GROUND_CUBE,
     Arm_Goal.PRE_DEAD_CONE,
-    Arm_Goal.SIDEWAYS_DEAD_CONE,
     Arm_Goal.SHELF_PICKUP
 ]
 
@@ -16,8 +15,7 @@ INTAKE_GOALS = [
     Arm_Goal.GROUND_DEAD_CONE,
     Arm_Goal.GROUND_CONE,
     Arm_Goal.GROUND_CUBE,
-    Arm_Goal.PRE_DEAD_CONE,
-    Arm_Goal.SIDEWAYS_DEAD_CONE
+    Arm_Goal.PRE_DEAD_CONE
 ]
 
 def get_away_side(heading: float) -> int:
