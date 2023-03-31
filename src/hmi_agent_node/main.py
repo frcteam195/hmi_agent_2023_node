@@ -171,6 +171,7 @@ class HmiAgentNode():
                 self.arm_goal.wrist_goal = arm_message.goal.wrist_goal
                 self.current_goal = arm_message.goal.goal
                 self.arm_goal.goal_side = arm_message.goal.goal_side
+                self.intake_side = arm_message.goal.goal_side
             #print(arm_status_message.goal.arm)
             self.process_leds()
             return
