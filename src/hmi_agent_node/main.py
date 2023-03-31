@@ -30,7 +30,7 @@ NUM_LEDS = 50
 solid_purple = Led_Control(Led_Control.SET_LED, 0, 57, 3, 87, 0, 1, 0, NUM_LEDS, "")
 solid_yellow = Led_Control(Led_Control.SET_LED, 0, 255, 255, 0, 0, 1, 0, NUM_LEDS, "")
 strobe_purple = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 57, 3, 87, 0, 0, 0.25, NUM_LEDS, "")
-strobe_red = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 96, 0, 0, 0, 0, 0.10, NUM_LEDS, "")
+strobe_red = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 96, 0, 0, 0, 0, 0.05, NUM_LEDS, "")
 larson_purple = Led_Control(Led_Control.ANIMATE, Led_Control.LARSON, 57, 3, 87, 0, 0, 0.20, NUM_LEDS, "")
 fire_animation = Led_Control(Led_Control.ANIMATE, Led_Control.FIRE, 0, 0, 0, 0, 0.5, 0.5, NUM_LEDS, "")
 rainbow = Led_Control(Led_Control.ANIMATE, Led_Control.RAINBOW, 0, 0, 0, 0, 0.5, 0.60, NUM_LEDS, "")
@@ -139,6 +139,7 @@ class HmiAgentNode():
         self.arm_goal = Arm_Goal()
         self.arm_goal.goal = Arm_Goal.HOME
         self.arm_goal.wrist_goal = Arm_Goal.WRIST_ZERO
+        self.goal_side = None
 
         self.odometry_subscriber = BufferedROSMsgHandlerPy(Odometry)
         self.odometry_subscriber.register_for_updates("odometry/filtered")
@@ -170,8 +171,8 @@ class HmiAgentNode():
             if arm_message is not None:
                 self.arm_goal.wrist_goal = arm_message.goal.wrist_goal
                 self.current_goal = arm_message.goal.goal
-                self.arm_goal.goal_side = arm_message.goal.goal_side
-            #print(arm_status_message.goal.arm)
+                self.goal_side = arm_message.goal.goal_side
+            # print(arm_status_message.goal.arm)
             self.process_leds()
             return
 
