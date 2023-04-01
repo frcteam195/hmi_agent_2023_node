@@ -166,8 +166,10 @@ class HmiAgentNode():
         """
 
         #DO NOT REMOVE THIS CHECK!!!!!!!!!! DID YOU LEARN NOTHING FROM 2022?!
-        if robot_status.get_mode() != RobotMode.TELEOP:
+        if robot_status.get_mode() == RobotMode.DISABLED:
             self.process_leds()
+            return
+        elif robot_status.get_mode() == RobotMode.AUTONOMOUS:
             return
 
         Joystick.update(message)
