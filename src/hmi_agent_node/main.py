@@ -30,7 +30,7 @@ NUM_LEDS = 50
 solid_purple = Led_Control(Led_Control.SET_LED, 0, 57, 3, 87, 0, 1, 0, NUM_LEDS, "")
 solid_yellow = Led_Control(Led_Control.SET_LED, 0, 255, 255, 0, 0, 1, 0, NUM_LEDS, "")
 strobe_purple = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 57, 3, 87, 0, 0, 0.25, NUM_LEDS, "")
-strobe_red = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 96, 0, 0, 0, 0, 0.10, NUM_LEDS, "")
+strobe_red = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 96, 0, 0, 0, 0, 0.05, NUM_LEDS, "")
 larson_purple = Led_Control(Led_Control.ANIMATE, Led_Control.LARSON, 57, 3, 87, 0, 0, 0.20, NUM_LEDS, "")
 fire_animation = Led_Control(Led_Control.ANIMATE, Led_Control.FIRE, 0, 0, 0, 0, 0.5, 0.5, NUM_LEDS, "")
 rainbow = Led_Control(Led_Control.ANIMATE, Led_Control.RAINBOW, 0, 0, 0, 0, 0.5, 0.60, NUM_LEDS, "")
@@ -74,7 +74,6 @@ class OperatorSplitParams:
     pickup_cone_button_id: int = -1
     pickup_dead_cone_button_id: int = -1
     pre_dead_cone_button_id: int = -1
-    sideways_dead_cone_button_id: int = -1
 
     high_cube_button_id: int = -1
     mid_cube_button_id: int = -1
@@ -140,6 +139,7 @@ class HmiAgentNode():
         self.arm_goal = Arm_Goal()
         self.arm_goal.goal = Arm_Goal.HOME
         self.arm_goal.wrist_goal = Arm_Goal.WRIST_ZERO
+        self.goal_side = None
 
         self.odometry_subscriber = BufferedROSMsgHandlerPy(Odometry)
         self.odometry_subscriber.register_for_updates("odometry/filtered")
@@ -166,10 +166,21 @@ class HmiAgentNode():
         """
 
         #DO NOT REMOVE THIS CHECK!!!!!!!!!! DID YOU LEARN NOTHING FROM 2022?!
-        if robot_status.get_mode() == RobotMode.DISABLED:
-            self.process_leds()
-            return
-        elif robot_status.get_mode() == RobotMode.AUTONOMOUS:
+        if robot_status.get_mode() != RobotMode.TELEOP:
+            arm_message : Arm_Status = self.arm_subscriber.get()
+            if arm_message is not None:
+                self.arm_goal.wrist_goal = arm_message.goal.wrist_goal
+
+                if arm_message.goal.goal == Arm_Goal.HIGH_CUBE:
+                    self.current_goal = arm_message.goal.goal
+                else:
+                    self.current_goal = Arm_Goal.HOME
+
+                self.arm_goal.goal_side = arm_message.goal.goal_side
+
+            if robot_status.get_mode() != RobotMode.AUTONOMOUS:
+                self.process_leds()
+
             return
 
         Joystick.update(message)
@@ -283,9 +294,6 @@ class HmiAgentNode():
 
         if self.operator_button_box.getRisingEdgeButton(self.operator_params.pre_dead_cone_button_id):
             self.current_goal = Arm_Goal.PRE_DEAD_CONE
-        
-        if self.operator_joystick.getRisingEdgeButton(6):
-            self.current_goal = Arm_Goal.SIDEWAYS_DEAD_CONE
 
         # If the new arm goal is not an intake goal, reset the intake parameters.
         if self.current_goal != self.arm_goal.goal and self.current_goal not in INTAKE_GOALS:
