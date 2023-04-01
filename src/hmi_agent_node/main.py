@@ -173,6 +173,7 @@ class HmiAgentNode():
                 self.current_goal = arm_message.goal.goal
                 self.arm_goal.goal_side = arm_message.goal.goal_side
                 self.intake_side = arm_message.goal.goal_side
+                self.current_goal = Arm_Goal.HOME if self.current_goal == Arm_Goal.SPORT_MODE else self.current_goal
             #print(arm_status_message.goal.arm)
             self.process_leds()
             return
