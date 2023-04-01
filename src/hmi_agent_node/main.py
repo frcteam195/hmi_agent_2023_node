@@ -152,6 +152,8 @@ class HmiAgentNode():
         self.reverse_intake = False
         self.intake_side = None
 
+        self.__prev_robot_mode = None
+
         rospy.Subscriber(name="/JoystickStatus", data_class=Joystick_Status, callback=self.joystick_callback, queue_size=1, tcp_nodelay=True)
         # profiler = cProfile.Profile()
         # profiler.enable()
@@ -166,18 +168,22 @@ class HmiAgentNode():
         """
 
         #DO NOT REMOVE THIS CHECK!!!!!!!!!! DID YOU LEARN NOTHING FROM 2022?!
-        if robot_status.get_mode() != RobotMode.TELEOP:
+        robot_mode : RobotMode = robot_status.get_mode()
+        if robot_mode != RobotMode.TELEOP:
+            self.process_leds()
+            self.__prev_robot_mode = robot_mode
+            return
+        elif robot_mode != self.__prev_robot_mode and robot_mode == RobotMode.TELEOP:
+            #First Transition From Auto
             arm_message : Arm_Status = self.arm_subscriber.get()
             if arm_message is not None:
-                self.arm_goal.wrist_goal = arm_message.goal.wrist_goal
-                self.current_goal = arm_message.goal.goal
-                self.arm_goal.goal_side = arm_message.goal.goal_side
-                self.intake_side = arm_message.goal.goal_side
-                self.current_goal = Arm_Goal.HOME if self.current_goal == Arm_Goal.SPORT_MODE else self.current_goal
-            #print(arm_status_message.goal.arm)
-            self.process_leds()
-            return
+                current_goal = arm_message.goal.goal
+                if current_goal == Arm_Goal.HIGH_CONE or current_goal == Arm_Goal.HIGH_CUBE or current_goal == Arm_Goal.PRE_SCORE:
+                    self.arm_goal.wrist_goal = arm_message.goal.wrist_goal
+                    self.current_goal = arm_message.goal.goal
+                    self.arm_goal.goal_side = arm_message.goal.goal_side
 
+        self.__prev_robot_mode = robot_mode
         Joystick.update(message)
 
         hmi_update_message = HMI_Signals()
