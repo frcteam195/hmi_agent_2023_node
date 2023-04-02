@@ -28,7 +28,7 @@ from frc_robot_utilities_py_node.RobotStatusHelperPy import BufferedROSMsgHandle
 
 NUM_LEDS = 50
 solid_purple = Led_Control(Led_Control.SET_LED, 0, 57, 3, 87, 0, 1, 0, NUM_LEDS, "")
-solid_yellow = Led_Control(Led_Control.SET_LED, 0, 255, 255, 0, 0, 1, 0, NUM_LEDS, "")
+solid_yellow = Led_Control(Led_Control.SET_LED, 0, 96, 96, 0, 0, 1, 0, NUM_LEDS, "")
 strobe_purple = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 57, 3, 87, 0, 0, 0.25, NUM_LEDS, "")
 strobe_red = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 96, 0, 0, 0, 0, 0.05, NUM_LEDS, "")
 larson_purple = Led_Control(Led_Control.ANIMATE, Led_Control.LARSON, 57, 3, 87, 0, 0, 0.20, NUM_LEDS, "")
