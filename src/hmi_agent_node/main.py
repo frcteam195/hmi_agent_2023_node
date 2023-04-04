@@ -33,7 +33,7 @@ strobe_purple = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 57, 3, 87, 
 strobe_red = Led_Control(Led_Control.ANIMATE, Led_Control.STROBE, 96, 0, 0, 0, 0, 0.05, NUM_LEDS, "")
 larson_purple = Led_Control(Led_Control.ANIMATE, Led_Control.LARSON, 57, 3, 87, 0, 0, 0.20, NUM_LEDS, "")
 fire_animation = Led_Control(Led_Control.ANIMATE, Led_Control.FIRE, 0, 0, 0, 0, 0.5, 0.5, NUM_LEDS, "")
-rainbow = Led_Control(Led_Control.ANIMATE, Led_Control.RAINBOW, 0, 0, 0, 0, 0.5, 0.60, NUM_LEDS, "")
+rainbow = Led_Control(Led_Control.ANIMATE, Led_Control.RAINBOW, 0, 0, 0, 0, 0.5, 0.30, NUM_LEDS, "")
 twinkle_purple = Led_Control(Led_Control.ANIMATE, Led_Control.TWINKLE_OFF, 57, 3, 87, 0, 0, 0.25, NUM_LEDS, "")
 
 @dataclass
