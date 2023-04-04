@@ -235,6 +235,7 @@ class HmiAgentNode():
         hmi_update_message.drivetrain_xmode = False
         if self.driver_joystick.getButton(self.driver_params.robot_xmode_driver_id) or self.operator_joystick.getButton(self.operator_params.robot_xmode_id):
             hmi_update_message.drivetrain_xmode = True
+            self.current_color = rainbow
 
         if self.driver_joystick.getRisingEdgeButton(self.driver_params.reset_odometry_button_id):
             reset_robot_pose(robot_status.get_alliance())
