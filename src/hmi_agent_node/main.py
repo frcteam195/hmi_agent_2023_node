@@ -368,7 +368,7 @@ class HmiAgentNode():
         if self.operator_joystick.getButton(self.operator_params.intake_in_button_id):
             intake_control.rollers_intake = True
             intake_control.rollers_outtake = False
-            if self.pinch_active == False and self.arm_goal.goal != Arm_Goal.GROUND_CONE and self.arm_goal.goal != Arm_Goal.GROUND_DEAD_CONE:
+            if self.pinch_active == False and self.arm_goal.goal != Arm_Goal.GROUND_CONE and self.arm_goal.goal != Arm_Goal.GROUND_DEAD_CONE and self.arm_goal.goal != Arm_Goal.PRE_DEAD_CONE:
                 intake_control.speed = 0.2
             else:
                 intake_control.speed = 0
