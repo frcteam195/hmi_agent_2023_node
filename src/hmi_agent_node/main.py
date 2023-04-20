@@ -92,6 +92,8 @@ class OperatorSplitParams:
 
     robot_xmode_id: int = -1
 
+    force_home_button_id: int = -1
+
     led_control_pov_id: int = -1
 
     toggle_reverse_side_button_id: int = -1
@@ -340,6 +342,11 @@ class HmiAgentNode():
                     self.intake_side = Arm_Goal.SIDE_BACK if self.arm_goal.goal_side == Arm_Goal.SIDE_BACK else Arm_Goal.SIDE_FRONT
 
             self.arm_goal.goal_side = self.intake_side
+
+        if self.operator_joystick.getRisingEdgeButton(self.operator_params.force_home_button_id):
+            self.current_goal = Arm_Goal.FORCE_HOME
+            self.arm_goal.goal = Arm_Goal.FORCE_HOME
+            
 
         self.arm_goal_publisher.publish(self.arm_goal)
         self.hmi_publisher.publish(hmi_update_message)
