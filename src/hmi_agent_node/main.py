@@ -334,7 +334,8 @@ class HmiAgentNode():
         if self.arm_goal.goal in (Arm_Goal.SHELF_PICKUP, Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
             self.arm_goal.goal_side = get_away_side(self.heading)
         else:
-            self.arm_goal.goal_side = get_home_side(self.heading)
+            if self.arm_goal.goal != Arm_Goal.SPORT_MODE:
+                self.arm_goal.goal_side = get_home_side(self.heading)
 
         # Lock the intake positions to their original side.
         if self.arm_goal.goal in (Arm_Goal.GROUND_CONE, Arm_Goal.GROUND_CUBE, Arm_Goal.GROUND_DEAD_CONE, Arm_Goal.PRE_DEAD_CONE):
@@ -353,12 +354,12 @@ class HmiAgentNode():
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.sport_mode_front_button_id):
             self.current_goal = Arm_Goal.SPORT_MODE
             self.arm_goal.goal = Arm_Goal.SPORT_MODE
-            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
+            self.arm_goal.goal_side = Arm_Goal.SIDE_BACK
 
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.sport_mode_back_button_id):
             self.current_goal = Arm_Goal.SPORT_MODE
             self.arm_goal.goal = Arm_Goal.SPORT_MODE
-            self.arm_goal.goal_side = Arm_Goal.SIDE_BACK
+            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
             
 
         self.arm_goal_publisher.publish(self.arm_goal)
