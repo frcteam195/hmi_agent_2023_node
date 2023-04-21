@@ -90,6 +90,9 @@ class OperatorSplitParams:
 
     pre_score_position_button_id: int = -1
 
+    sport_mode_front_button_id: int = -1
+    sport_mode_back_button_id: int = -1
+
     robot_xmode_id: int = -1
 
     force_home_button_id: int = -1
@@ -346,6 +349,16 @@ class HmiAgentNode():
         if self.operator_joystick.getRisingEdgeButton(self.operator_params.force_home_button_id):
             self.current_goal = Arm_Goal.FORCE_HOME
             self.arm_goal.goal = Arm_Goal.FORCE_HOME
+
+        if self.operator_joystick.getRisingEdgeButton(self.operator_params.sport_mode_front_button_id):
+            self.current_goal = Arm_Goal.SPORT_MODE
+            self.arm_goal.goal = Arm_Goal.SPORT_MODE
+            self.arm_goal.goal_side = Arm_Goal.SIDE_FRONT
+
+        if self.operator_joystick.getRisingEdgeButton(self.operator_params.sport_mode_back_button_id):
+            self.current_goal = Arm_Goal.SPORT_MODE
+            self.arm_goal.goal = Arm_Goal.SPORT_MODE
+            self.arm_goal.goal_side = Arm_Goal.SIDE_BACK
             
 
         self.arm_goal_publisher.publish(self.arm_goal)
